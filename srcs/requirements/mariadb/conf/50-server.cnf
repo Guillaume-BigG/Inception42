@@ -1,0 +1,95 @@
+[mysqld]
+
+user                    = mysql                      # Run MariaDB as the mysql user
+bind-address            = 127.0.0.1                   # Restrict external access (Docker will still allow container connections)
+datadir                 = /var/lib/mysql              # Directory where MariaDB stores its data
+socket                  = /run/mysqld/mysqld.sock     # Path to the socket for local connections
+log_error               = /var/log/mysql/error.log    # Location for error logs
+
+character-set-server    = utf8mb4                    # Default character set (UTF-8)
+collation-server        = utf8mb4_general_ci          # Default collation for the character set
+
+# Security Enhancements
+skip-host-cache
+skip-name-resolve
+
+# Performance Optimizations for WordPress
+innodb_buffer_pool_size = 256M
+innodb_flush_log_at_trx_commit = 1
+innodb_log_buffer_size = 8M
+innodb_file_per_table = 1
+query_cache_size = 64M
+max_connections = 100
+
+expire_logs_days        = 30                          # Number of days before binary logs are expired
+
+
+
+# Run MariaDB as the `mysql` system user (prevents running as root)
+user                    = mysql                      
+
+# Restrict external access (only allow connections from inside the container)
+# Docker will still allow other containers in the same network to connect.
+bind-address            = 127.0.0.1                   
+
+# Directory where MariaDB stores all database files
+# This directory is mapped to a Docker volume so that data persists.
+datadir                 = /var/lib/mysql              
+
+# Unix socket file for local connections (used instead of TCP/IP for efficiency)
+socket                  = /run/mysqld/mysqld.sock     
+
+# Log file to store error messages (useful for debugging)
+log_error               = /var/log/mysql/error.log    
+
+# Set default character set to UTF-8 (supports all languages & emojis)
+character-set-server    = utf8mb4                     
+
+# Defines how text is sorted and compared (case-insensitive)
+collation-server        = utf8mb4_general_ci          
+
+# Security Enhancements
+# ----------------------------------------
+
+# Prevents MariaDB from caching hostnames (reduces risk of DNS poisoning)
+skip-host-cache
+
+# Forces MariaDB to use IP addresses instead of resolving hostnames
+# Improves performance and prevents unnecessary DNS lookups.
+skip-name-resolve      
+
+# Performance Optimizations for WordPress
+# ----------------------------------------
+
+# The buffer pool is the most important setting for InnoDB performance.
+# It caches frequently accessed data, reducing disk reads.
+# If running on a high-memory server, increase this to 50%-75% of available RAM.
+innodb_buffer_pool_size = 256M    
+
+# Controls how transactions are written to disk:
+# 1 (default) - Ensures data is written to disk immediately (safe but slower)
+# 2 - Writes to disk in batches (faster, but risk of losing recent transactions in a crash)
+innodb_flush_log_at_trx_commit = 1    
+
+# InnoDB log buffer size (affects how often logs are written to disk)
+# 8MB is a good starting point for WordPress. Increase for high-traffic sites.
+innodb_log_buffer_size = 8M    
+
+# Store each InnoDB table in a separate file instead of a single large file.
+# This improves backup, performance, and management.
+innodb_file_per_table = 1    
+
+# Query cache stores previously executed queries in memory to speed up repeated queries.
+# This improves database response time significantly.
+query_cache_size = 64M    
+
+# Controls how many simultaneous connections MariaDB allows.
+# 100 is good for a small-to-medium WordPress site.
+# Increase to 200-500 for large, high-traffic sites.
+max_connections = 100    
+
+# Log Expiration & Cleanup
+# ----------------------------------------
+
+# Automatically deletes old logs after 30 days to prevent excessive disk usage.
+expire_logs_days        = 30                          
