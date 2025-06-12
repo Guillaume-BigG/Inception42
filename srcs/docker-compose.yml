@@ -1,82 +1,65 @@
-version: '3'
+version: '3.8'
 
 services:
   nginx:
-    container_name: nginx
     build: 
       context: ./requirements/nginx
-      args:
-        - DOMAIN_NAME
-        - CERTS_CRT
-        - CERTS_KEY
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./requirements/nginx/conf:/etc/nginx/conf.d
     depends_on:
       - wordpress
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - wordpress_volume:/var/www/html/wordpress
-    restart: always
     networks:
       - inception
+    restart: unless-stopped
 
   wordpress:
+    build: 
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
     container_name: wordpress
-    build:
-      context: ./requirements/wordpress/
-      args:
-        - WORDPRESS_DB_HOST
-        - WORDPRESS_DB_NAME
-        - WORDPRESS_URL
-        - WORDPRESS_GUEST_USER
-        - WORDPRESS_GUEST_PASSWORD
-        - WORDPRESS_DB_USER
-        - WORDPRESS_DB_PASSWORD
-        - WORDPRESS_ADMIN_USER
-        - WORDPRESS_ADMIN_PASSWORD
-        - WORDPRESS_ADMIN_EMAIL
-    depends_on:
-      mariadb:
-        condition: service_healthy  # Ensures MariaDB is fully ready
-    image: wordpress
-    env_file:
-      - .env
+    env_file: .env
     volumes:
-      - wordpress_volume:/var/www/html/wordpress
-    restart: always
+      - wordpress_data:/var/www/html
+    depends_on:
+      - mariadb
     networks:
       - inception
+    restart: unless-stopped
 
   mariadb:
+    build: 
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
     container_name: mariadb
-    build:
-      context: ./requirements/mariadb/
-      args:
-        - MYSQL_DATABASE
-        - MYSQL_ROOT
-        - MYSQL_ROOT_PASSWORD
-        - MYSQL_USER
-        - MYSQL_PASSWORD
-    image: mariadb
-    env_file:
-      - .env
+    env_file: .env
+    ports:
+      - "3306:3306"
     volumes:
-      - mariadb_volume:/var/lib/mysql/
-    restart: always
+      - mariadb_data:/var/lib/mysql
     networks:
       - inception
-    healthcheck:   # Ensures MariaDB is fully ready before WordPress starts
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  mariadb_volume:
-    name: mariadb_volume  # Ensure volumes are properly managed
-  wordpress_volume:
-    name: wordpress_volume
+    restart: unless-stopped
 
 networks:
   inception:
     driver: bridge
+
+volumes:
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/gbeaudoi/data/wordpress
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/gbeaudoi/data/mariadb
+

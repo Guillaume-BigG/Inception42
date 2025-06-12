@@ -1,78 +1,42 @@
-LOGIN = gbeaudoi
-COMPOSE = srcs/docker-compose.yml
-VOLUMES_PATH = /home/$(LOGIN)/data
-DOMAIN = 127.0.0.1 gbeaudoi.42.fr
-LOOKDOMAIN = $(shell grep "${DOMAIN}" /etc/hosts)
+NAME = inception
 
-export VOLUMES_PATH # Make it available for the Dockerfiles
+DOCKER_COMPOSE = docker-compose -f srcs/docker-compose.yml
+VOLUMES_PATH = /home/gbeaudoi/data
 
-# Default target
-all: srcs/.env hosts build up
+all: hosts volumes up
 
-# Install/update dependencies
-update-env:
-	sudo apt-get update && sudo apt-get upgrade -y
-	sudo apt-get install docker-compose-plugin
-
-# List Docker containers, networks, or volumes
-list:
-	docker ps -a
-
-list-networks:
-	docker network ls
-
-list-volumes:
-	docker volume ls
-
-# Start containers in detached mode
-up:
-	@echo "Starting the containers..."
-	docker compose -f $(COMPOSE) up --build --detach
-	@echo "Containers are running."
-
-# Build the volumes if they don't exist
-build:
-	@echo "Building volumes..."
-	$(MAKE) create-volumes
-
-# Create required volumes
-create-volumes:
-	sudo mkdir -p $(VOLUMES_PATH)/mysql $(VOLUMES_PATH)/wordpress
-	docker volume create --name mariadb_volume --opt type=none --opt device=$(VOLUMES_PATH)/mysql --opt o=bind
-	docker volume create --name wordpress_volume --opt type=none --opt device=$(VOLUMES_PATH)/wordpress --opt o=bind
-
-# Update /etc/hosts if necessary
 hosts:
-	@if ! grep -q "${DOMAIN}" /etc/hosts; then \
-		echo "Updating /etc/hosts..."; \
-		sudo cp ./srcs/requirements/tools/hosts /etc/hosts; \
-	fi
+	@echo "Adding domain to /etc/hosts..."
+	@sudo sh -c "cat srcs/requirements/tools/host >> /etc/hosts || true"
 
-# Ensure .env file exists
-srcs/.env:
-	@echo "Missing .env file in srcs folder" && exit 1
+volumes:
+	@mkdir -p $(VOLUMES_PATH)/wordpress
+	@mkdir -p $(VOLUMES_PATH)/mariadb
+	@chmod 755 $(VOLUMES_PATH)/wordpress
+	@chmod 755 $(VOLUMES_PATH)/mariadb
 
-# Show logs for containers
-logs:
-	docker compose -f $(COMPOSE) logs -f
+up:
+	@$(DOCKER_COMPOSE) up --build
 
-# Show status of containers
-status:
-	docker compose -f $(COMPOSE) ps
-
-# Stop and remove containers, volumes, and images
 down:
-	docker compose -f $(COMPOSE) down -v --rmi all --remove-orphans
+	@$(DOCKER_COMPOSE) down
 
-# Clean up unnecessary Docker resources
+logs:
+	@$(DOCKER_COMPOSE) logs -f
+
 clean: down
-	docker system prune --all --force --volumes
+	@$(DOCKER_COMPOSE) down --volumes
+	@docker system prune -af
 
-# Full cleanup (including volume and host backups)
 fclean: clean
-	sudo rm -rf $(VOLUMES_PATH)/wordpress $(VOLUMES_PATH)/mysql
-	docker volume rm mariadb_volume wordpress_volume
-	@sudo mv ./hosts_bkp /etc/hosts || echo "hosts_bkp does not exist"
+	@sudo rm -rf $(VOLUMES_PATH)/wordpress
+	@sudo rm -rf $(VOLUMES_PATH)/mariadb
+	@docker volume rm $$(docker volume ls -q) 2>/dev/null || true
 
-# Rebuild everything
+clean-hosts:
+	@echo "Removing domain from /etc/hosts..."
+	@sudo sed -i '/gbeaudoi.42.fr/d' /etc/hosts
+
 re: fclean all
+
+.PHONY: all hosts volumes up down logs clean fclean re

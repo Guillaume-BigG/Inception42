@@ -1,0 +1,2 @@
+# Ignore backend environment variables
+/srcs/.env
