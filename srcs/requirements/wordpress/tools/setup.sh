@@ -2,24 +2,20 @@
 
 set -e
 
-# Install WP-CLI if not present
 if [ ! -f /usr/local/bin/wp ]; then
     wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
     chmod +x wp-cli.phar
     mv wp-cli.phar /usr/local/bin/wp
 fi
 
-# Ensure correct ownership of WordPress volume
 chown -R www-data:www-data /var/www/html
 cd /var/www/html
 
-# Wait until MariaDB is reachable
 until mysqladmin ping -h"$MYSQL_HOST" --silent; do
     echo "Waiting for MariaDB..."
     sleep 2
 done
 
-# If WordPress is not yet installed, perform setup
 if [ ! -f wp-config.php ]; then
     echo "Installing WordPress..."
     su www-data -s /bin/bash -c "
@@ -32,5 +28,4 @@ else
     echo "WordPress is already installed."
 fi
 
-# Start PHP-FPM in foreground
 exec php-fpm7.4 -R -F -d error_log=/dev/stderr
