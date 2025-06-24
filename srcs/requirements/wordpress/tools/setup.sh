@@ -24,13 +24,13 @@ if [ ! -f wp-config.php ]; then
     echo "Installing WordPress..."
     su www-data -s /bin/bash -c "
         wp core download --path=/var/www/html --allow-root;
-        wp config create --dbname='$MYSQL_DATABASE' --dbuser='$MYSQL_USER' --dbpass='$MYSQL_PASSWORD' --dbhost='$MYSQL_HOST' --allow-root;
-        wp core install --url='$DOMAIN_NAME' --title='$WP_TITLE' --admin_user='$WP_ADMIN_USER' --admin_password='$WP_ADMIN_PASSWORD' --admin_email='$WP_ADMIN_EMAIL' --allow-root;
-        wp user create '$WP_USER' '$WP_USER_EMAIL' --role=author --user_pass='$WP_USER_PASSWORD' --allow-root;
+        wp config create --dbname="${MYSQL_DATABASE}" --dbuser="${MYSQL_USER}" --dbpass="${MYSQL_PASSWORD}" --dbhost="${MYSQL_HOST}" --allow-root;
+        wp core install --url="${DOMAIN_NAME}" --title="${WP_TITLE}" --admin_user="${WP_ADMIN_USER}" --admin_password="${WP_ADMIN_PASSWORD}" --admin_email="${WP_ADMIN_EMAIL}" --allow-root;
+        wp user create "${WP_USER}" "${WP_USER_EMAIL}" --role=author --user_pass="${WP_USER_PASSWORD}" --allow-root;
     "
 else
     echo "WordPress is already installed."
 fi
 
 # Start PHP-FPM in foreground
-exec php-fpm -R -F -d error_log=/dev/stderr
+exec php-fpm7.4 -R -F -d error_log=/dev/stderr

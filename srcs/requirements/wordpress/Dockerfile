@@ -8,11 +8,18 @@ RUN apt-get update && apt-get install -y \
     php-fpm \
     php7.4-fpm \
     php-mysqli \
+    php-mysql \
     php-redis \
     php-curl \
+    php-gd \
     php-xml \
     php-mbstring \
+    php-xmlrpc \
+    php-soap \
+    php-zip \
+    php-intl \
     wget \
+    mariadb-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /workspace /run/php && chown -R www-data:www-data /workspace /run/php
