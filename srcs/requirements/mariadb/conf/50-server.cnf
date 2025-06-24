@@ -1,7 +1,7 @@
 [server]
 
 [mysqld]
-user                    = msql
+user                    = mysql
 pid-file                = /run/mysqld/mysqld.pid
 basedir                 = /usr
 datadir                 = /var/lib/mysql
